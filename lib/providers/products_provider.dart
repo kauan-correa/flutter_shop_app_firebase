@@ -1,10 +1,10 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shop/data/dummy_data.dart';
 import 'package:shop/providers/product.dart';
+import 'package:flutter/services.dart' show rootBundle;
 
 class ProductsProvider with ChangeNotifier {
   final List<Product> _items = DUMMY_PRODUCTS;
@@ -19,19 +19,21 @@ class ProductsProvider with ChangeNotifier {
     return _items.where((item) => item.isFavorite).toList();
   }
 
-  void addProduct(Product product) {
+  Future<void> addProduct(Product product) async {
     JsonDecoder jsonDecoder = const JsonDecoder();
-    final json = File("/assets/data/database.json").readAsStringSync();
-    final data = jsonDecoder.convert(json);
-    String url = data["url"];
+    final jsonDatabase =
+        await rootBundle.loadString('assets/data/settings.json');
+    final data = jsonDecoder.convert(jsonDatabase);
+    String url = data["database_url"];
 
-    http.post(Uri.parse("$url/products.json"), body: {
-      'title': product.title,
-      'description': product.description,
-      'price': product.price.toString(),
-      'imageUrl': product.imageUrl,
-      'isFavorite': product.isFavorite.toString(),
-    });
+    http.post(Uri.parse("$url/products.json"),
+        body: json.encode({
+          'title': product.title,
+          'description': product.description,
+          'price': product.price.toString(),
+          'imageUrl': product.imageUrl,
+          'isFavorite': product.isFavorite.toString(),
+        }));
 
     if (_items.any((item) => item.id == product.id)) {
       final index = _items.indexWhere((item) => item.id == product.id);
