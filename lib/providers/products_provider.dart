@@ -8,8 +8,31 @@ import 'package:flutter/services.dart' show rootBundle;
 
 class ProductsProvider with ChangeNotifier {
   final List<Product> _items = DUMMY_PRODUCTS;
+  final jsonDatabase = rootBundle.loadString('assets/data/settings.json');
 
   List<Product> get items => [..._items];
+
+  Future<void> loadProducts() async {
+    try {
+      final data = json.decode(await jsonDatabase);
+      String url = data["database_url"];
+      final response = await http.get(Uri.parse("$url/products.json"));
+      final Map<String, dynamic> extractedData = json.decode(response.body);
+      extractedData.forEach((productId, productData) {
+        _items.add(Product(
+          id: productId,
+          title: productData["title"],
+          description: productData["description"],
+          price: double.parse(productData["price"]),
+          imageUrl: productData["imageUrl"],
+          isFavorite: productData["isFavorite"],
+        ));
+      });
+      notifyListeners();
+    } catch (error) {
+      print(error);
+    }
+  }
 
   int get itemCount {
     return _items.length;
@@ -19,29 +42,38 @@ class ProductsProvider with ChangeNotifier {
     return _items.where((item) => item.isFavorite).toList();
   }
 
-  Future<void> addProduct(Product product) async {
-    JsonDecoder jsonDecoder = const JsonDecoder();
-    final jsonDatabase =
-        await rootBundle.loadString('assets/data/settings.json');
-    final data = jsonDecoder.convert(jsonDatabase);
-    String url = data["database_url"];
+  Future<bool> addProduct(Product product) async {
+    try {
+      final data = json.decode(await jsonDatabase);
+      String url = data["database_url"];
 
-    http.post(Uri.parse("$url/products.json"),
-        body: json.encode({
-          'title': product.title,
-          'description': product.description,
-          'price': product.price.toString(),
-          'imageUrl': product.imageUrl,
-          'isFavorite': product.isFavorite.toString(),
-        }));
+      final response = await http.post(
+        Uri.parse("$url/products.json"),
+        body: json.encode(
+          {
+            'title': product.title,
+            'description': product.description,
+            'price': product.price,
+            'imageUrl': product.imageUrl,
+            'isFavorite': product.isFavorite,
+          },
+        ),
+      );
 
-    if (_items.any((item) => item.id == product.id)) {
-      final index = _items.indexWhere((item) => item.id == product.id);
-      _items[index] = product;
-    } else {
-      _items.add(product);
+      final newProduct = Product(
+        id: json.decode(response.body)['name'],
+        title: product.title,
+        description: product.description,
+        price: product.price,
+        imageUrl: product.imageUrl,
+      );
+      _items.add(newProduct);
+      notifyListeners();
+      return true;
+    } catch (error) {
+      print(error);
+      return false;
     }
-    notifyListeners();
   }
 
   void updateProduct(Product product) {
