@@ -2,12 +2,11 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:shop/data/dummy_data.dart';
 import 'package:shop/providers/product.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
 class ProductsProvider with ChangeNotifier {
-  final List<Product> _items = DUMMY_PRODUCTS;
+  final List<Product> _items = [];
   final settingsFile = rootBundle.loadString('assets/settings/settingsDb.json');
 
   List<Product> get items => [..._items];
@@ -18,12 +17,13 @@ class ProductsProvider with ChangeNotifier {
       String url = settings["database_url"];
       final response = await http.get(Uri.parse("$url/products.json"));
       final Map<String, dynamic> extractedData = json.decode(response.body);
+      _items.clear();
       extractedData.forEach((productId, productData) {
         _items.add(Product(
           id: productId,
           title: productData["title"],
           description: productData["description"],
-          price: double.parse(productData["price"]),
+          price: productData["price"],
           imageUrl: productData["imageUrl"],
           isFavorite: productData["isFavorite"],
         ));

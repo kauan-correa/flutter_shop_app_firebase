@@ -88,12 +88,12 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   void initState() {
     super.initState();
     _imageFocusNode.addListener(_updateImage);
+    _imageUrlController.text = product == null ? "" : product!.imageUrl;
   }
 
   @override
   Widget build(BuildContext context) {
     product = ModalRoute.of(context)?.settings.arguments as Product?;
-    _imageUrlController.text = product == null ? "" : product!.imageUrl;
 
     return Scaffold(
       appBar: AppBar(
