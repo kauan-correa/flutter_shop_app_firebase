@@ -8,14 +8,14 @@ import 'package:flutter/services.dart' show rootBundle;
 
 class ProductsProvider with ChangeNotifier {
   final List<Product> _items = DUMMY_PRODUCTS;
-  final jsonDatabase = rootBundle.loadString('assets/data/settings.json');
+  final settingsFile = rootBundle.loadString('assets/settings/settingsDb.json');
 
   List<Product> get items => [..._items];
 
   Future<void> loadProducts() async {
     try {
-      final data = json.decode(await jsonDatabase);
-      String url = data["database_url"];
+      final settings = json.decode(await settingsFile);
+      String url = settings["database_url"];
       final response = await http.get(Uri.parse("$url/products.json"));
       final Map<String, dynamic> extractedData = json.decode(response.body);
       extractedData.forEach((productId, productData) {
@@ -44,7 +44,7 @@ class ProductsProvider with ChangeNotifier {
 
   Future<bool> addProduct(Product product) async {
     try {
-      final data = json.decode(await jsonDatabase);
+      final data = json.decode(await settingsFile);
       String url = data["database_url"];
 
       final response = await http.post(
