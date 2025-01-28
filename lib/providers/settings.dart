@@ -5,25 +5,28 @@ import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 
 class SettingsProvider with ChangeNotifier {
-  late File _settingsFile;
   bool _isDarkMode = true;
 
   bool get isDarkMode => _isDarkMode;
 
+  Future<File> get settingsFile async {
+    final directory = await getApplicationDocumentsDirectory();
+    return File('${directory.path}/settingsApp.json');
+  }
+
   Future<void> _loadSettingsFile() async {
     try {
-      final directory = await getApplicationDocumentsDirectory();
-      _settingsFile = File('${directory.path}/settingsApp.json');
+      final settingsFile = await this.settingsFile;
 
-      if (await _settingsFile.exists()) {
-        final settingsContent = await _settingsFile.readAsString();
+      if (await settingsFile.exists()) {
+        final settingsContent = await settingsFile.readAsString();
         final settings = json.decode(settingsContent);
         _isDarkMode = settings["darkMode"];
       } else {
         _isDarkMode = false;
       }
     } catch (error) {
-      print("Error: $error");
+      debugPrint("Error: $error");
       _isDarkMode = false;
     }
   }
@@ -35,17 +38,20 @@ class SettingsProvider with ChangeNotifier {
 
   void toggleTheme() async {
     _isDarkMode = !_isDarkMode;
-    notifyListeners();
     await _updateSettingsFile();
+    notifyListeners();
   }
 
   Future<void> _updateSettingsFile() async {
     try {
+      final settingsFile = await this.settingsFile;
+
       final settings = {"darkMode": _isDarkMode};
       final settingsJson = json.encode(settings);
-      await _settingsFile.writeAsString(settingsJson);
+
+      await settingsFile.writeAsString(settingsJson);
     } catch (error) {
-      print("Error: $error");
+      debugPrint("Error: $error");
     }
   }
 }

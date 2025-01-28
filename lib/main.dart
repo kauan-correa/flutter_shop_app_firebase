@@ -40,15 +40,22 @@ class MainApp extends StatelessWidget {
           create: (_) => SettingsProvider(),
         ),
       ],
-      child: Main(),
+      child: const Main(),
     );
   }
 }
 
-class Main extends StatelessWidget {
-  Main({
+class Main extends StatefulWidget {
+  const Main({
     super.key,
   });
+
+  @override
+  State<Main> createState() => _MainState();
+}
+
+class _MainState extends State<Main> {
+  bool isInitialized = false;
 
   final ThemeData lightTheme = ThemeData(
     scaffoldBackgroundColor: const Color.fromARGB(255, 202, 200, 200),
@@ -102,6 +109,15 @@ class Main extends StatelessWidget {
           color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
     ),
   );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!isInitialized) {
+      isInitialized = true;
+      Provider.of<SettingsProvider>(context).loadSettings().then((_) {});
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
