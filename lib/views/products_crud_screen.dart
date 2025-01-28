@@ -5,8 +5,21 @@ import 'package:shop/utils/app_routes.dart';
 import 'package:shop/widgets/app_drawer.dart';
 import 'package:shop/widgets/product_item.dart';
 
-class ProductsCrudScreen extends StatelessWidget {
+class ProductsCrudScreen extends StatefulWidget {
   const ProductsCrudScreen({super.key});
+
+  @override
+  State<ProductsCrudScreen> createState() => _ProductsCrudScreenState();
+}
+
+class _ProductsCrudScreenState extends State<ProductsCrudScreen> {
+  bool _isLoading = false;
+
+  void toggleLoading() {
+    setState(() {
+      _isLoading = !_isLoading;
+    });
+  }
 
   Future<void> _refreshProducts(BuildContext context) async {
     return await Provider.of<ProductsProvider>(context, listen: false)
@@ -32,18 +45,23 @@ class ProductsCrudScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () => _refreshProducts(context),
-        child: Padding(
-          padding: const EdgeInsets.all(8),
-          child: ListView.builder(
-            itemCount: products.itemCount,
-            itemBuilder: (ctx, i) {
-              return ProductItem(product: products.items[i]);
-            },
-          ),
-        ),
-      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator.adaptive())
+          : RefreshIndicator(
+              onRefresh: () => _refreshProducts(context),
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: ListView.builder(
+                  itemCount: products.itemCount,
+                  itemBuilder: (ctx, i) {
+                    return ProductItem(
+                      product: products.items[i],
+                      toggleLoading: toggleLoading,
+                    );
+                  },
+                ),
+              ),
+            ),
     );
   }
 }

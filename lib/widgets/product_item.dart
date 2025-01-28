@@ -5,8 +5,10 @@ import 'package:shop/providers/products_provider.dart';
 import 'package:shop/utils/app_routes.dart';
 
 class ProductItem extends StatelessWidget {
-  const ProductItem({super.key, required this.product});
+  const ProductItem(
+      {super.key, required this.product, required this.toggleLoading});
   final Product product;
+  final void Function() toggleLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -46,10 +48,13 @@ class ProductItem extends StatelessWidget {
                           ),
                           TextButton(
                             onPressed: () {
+                              toggleLoading();
                               ProductsProvider products =
                                   Provider.of<ProductsProvider>(context,
                                       listen: false);
-                              products.removeProduct(product.id);
+                              products.removeProduct(product).then((_) {
+                                toggleLoading();
+                              });
                               SnackBar snackBar = const SnackBar(
                                 content: Text("Product deleted!"),
                                 duration: Duration(seconds: 2),
