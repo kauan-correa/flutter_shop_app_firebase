@@ -24,6 +24,11 @@ class _ProductsOverviewScreenState extends State<ProductsOverviewScreen> {
   FilterOptions selectedMenu = FilterOptions.All;
   bool _isLoad = false;
 
+  Future<void> _refreshProducts(BuildContext context) async {
+    return await Provider.of<ProductsProvider>(context, listen: false)
+        .loadProducts();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -108,9 +113,12 @@ class _ProductsOverviewScreenState extends State<ProductsOverviewScreen> {
         ),
         centerTitle: true,
       ),
-      body: !_isLoad
-          ? const Center(child: CircularProgressIndicator())
-          : ProductGrid(showFavoriteOnly: _showFavoriteOnly),
+      body: RefreshIndicator(
+        onRefresh: () => _refreshProducts(context),
+        child: !_isLoad
+            ? const Center(child: CircularProgressIndicator())
+            : ProductGrid(showFavoriteOnly: _showFavoriteOnly),
+      ),
     );
   }
 }

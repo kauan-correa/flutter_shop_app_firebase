@@ -76,11 +76,36 @@ class ProductsProvider with ChangeNotifier {
     }
   }
 
-  void updateProduct(Product product) {
-    if (_items.any((item) => item.id == product.id)) {
-      final index = _items.indexWhere((item) => item.id == product.id);
-      _items[index] = product;
-      notifyListeners();
+  Future<bool> updateProduct(Product product) async {
+    try {
+      if (_items.any((item) => item.id == product.id)) {
+        final index = _items.indexWhere((item) => item.id == product.id);
+        if (index >= 0) {
+          final settings = json.decode(await settingsFile);
+          String url = settings["database_url"];
+          final response = await http.patch(
+            Uri.parse("$url/products/${product.id}.json"),
+            body: json.encode({
+              'title': product.title,
+              'description': product.description,
+              'price': product.price,
+              'imageUrl': product.imageUrl,
+            }),
+          );
+
+          if (response.statusCode == 200 || response.statusCode == 204) {
+            _items[index] = product;
+            notifyListeners();
+            return true;
+          } else {
+            return false;
+          }
+        }
+      }
+      return false;
+    } catch (error) {
+      print("Error updating product: $error");
+      return false;
     }
   }
 

@@ -46,20 +46,24 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     });
 
     late String message;
-    bool success = false;
+    bool success;
     try {
       if (product == null) {
         success = await productsProvider.addProduct(newProduct);
         message = success ? "Product created!" : "Error creating product!";
       } else {
-        productsProvider.updateProduct(newProduct);
-        success = true;
-        message = "Product updated!";
+        success = await productsProvider.updateProduct(newProduct);
+        message = success ? "Product updated!" : "Error updating product!";
       }
     } catch (error) {
       message = "An unexpected error occurred.";
+      success = false;
     }
     if (!mounted) return;
+
+    if (success) {
+      Navigator.of(context).pop();
+    }
 
     setState(() {
       _isLoading = false;
@@ -69,10 +73,6 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       content: Text(message),
       duration: const Duration(seconds: 2),
     ));
-
-    if (success) {
-      Navigator.of(context).pop();
-    }
   }
 
   @override
@@ -88,13 +88,17 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   void initState() {
     super.initState();
     _imageFocusNode.addListener(_updateImage);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    product = ModalRoute.of(context)?.settings.arguments as Product?;
     _imageUrlController.text = product == null ? "" : product!.imageUrl;
   }
 
   @override
   Widget build(BuildContext context) {
-    product = ModalRoute.of(context)?.settings.arguments as Product?;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text("Product Form"),
