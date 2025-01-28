@@ -45,7 +45,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       _isLoading = true;
     });
 
-    late String message;
+    String message;
     bool success;
     try {
       if (product == null) {
