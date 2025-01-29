@@ -8,7 +8,7 @@ class SettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    SettingsProvider settings = Provider.of<SettingsProvider>(context);
+    SettingsProvider settingsApp = Provider.of<SettingsProvider>(context);
     return Scaffold(
       drawer: const AppDrawer(),
       appBar: AppBar(
@@ -17,25 +17,46 @@ class SettingsScreen extends StatelessWidget {
       ),
       body: Column(
         children: [
-          const SizedBox(height: 20),
-          Text(
-            "Theme",
-            style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.tertiary),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20),
+            child: Text(
+              "Theme",
+              style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.tertiary),
+            ),
           ),
-          const SizedBox(height: 20),
           Card(
             child: SwitchListTile(
               title: const Text(
                 "Dark Mode",
               ),
               subtitle: const Text("Enable/Disable Dark Mode"),
-              value: settings.isDarkMode,
+              value: settingsApp.isDarkMode,
               onChanged: (_) {
-                settings.toggleTheme();
+                settingsApp.toggleTheme();
               },
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20),
+            child: Text(
+              "Firebase",
+              style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.tertiary),
+            ),
+          ),
+          const Card(
+            child: ListTile(
+              title: Text("Firebase"),
+              subtitle: TextField(
+                decoration: InputDecoration(
+                  hintText: "Enter your firebase URL",
+                ),
+              ),
             ),
           ),
         ],

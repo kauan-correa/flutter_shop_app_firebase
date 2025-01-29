@@ -52,7 +52,7 @@ class _ProductsCrudScreenState extends State<ProductsCrudScreen> {
               child: Padding(
                 padding: const EdgeInsets.all(8),
                 child: ListView.builder(
-                  itemCount: products.itemCount,
+                  itemCount: products.items.length,
                   itemBuilder: (ctx, i) {
                     return ProductItem(
                       product: products.items[i],

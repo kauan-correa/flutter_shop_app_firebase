@@ -1,25 +1,28 @@
+import 'dart:collection';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shop/data/database_service.dart';
 import 'package:shop/providers/product.dart';
-import 'package:flutter/services.dart' show rootBundle;
 
 class ProductsProvider with ChangeNotifier {
+  final DatabaseService _databaseService = DatabaseService();
   final List<Product> _items = [];
 
-  List<Product> get items => [..._items];
+  ProductsProvider() {
+    loadProducts();
+  }
 
-  Future<String> get _urlDb async {
-    final settingsFile =
-        rootBundle.loadString('assets/settings/settingsDb.json');
-    final settings = json.decode(await settingsFile);
-    return settings["database_url"];
+  UnmodifiableListView<Product> get items => UnmodifiableListView(_items);
+  UnmodifiableListView<Product> get favoriteItems {
+    return UnmodifiableListView(
+        _items.where((product) => product.isFavorite).toList());
   }
 
   Future<void> loadProducts() async {
     try {
-      String url = await _urlDb;
+      String url = await _databaseService.getDatabaseUrl();
       final response = await http.get(Uri.parse("$url/products.json"));
       final Map<String, dynamic> extractedData = json.decode(response.body);
       _items.clear();
@@ -35,32 +38,22 @@ class ProductsProvider with ChangeNotifier {
       });
       notifyListeners();
     } catch (error) {
-      print(error);
+      debugPrint("Error loading products: $error");
     }
-  }
-
-  int get itemCount {
-    return _items.length;
-  }
-
-  List<Product> get favoriteItems {
-    return _items.where((item) => item.isFavorite).toList();
   }
 
   Future<bool> addProduct(Product product) async {
     try {
-      String url = await _urlDb;
+      String url = await _databaseService.getDatabaseUrl();
       final response = await http.post(
         Uri.parse("$url/products.json"),
-        body: json.encode(
-          {
-            'title': product.title,
-            'description': product.description,
-            'price': product.price,
-            'imageUrl': product.imageUrl,
-            'isFavorite': product.isFavorite,
-          },
-        ),
+        body: json.encode({
+          'title': product.title,
+          'description': product.description,
+          'price': product.price,
+          'imageUrl': product.imageUrl,
+          'isFavorite': product.isFavorite,
+        }),
       );
 
       final newProduct = Product(
@@ -69,10 +62,10 @@ class ProductsProvider with ChangeNotifier {
         description: product.description,
         price: product.price,
         imageUrl: product.imageUrl,
+        isFavorite: product.isFavorite,
       );
       _items.add(newProduct);
       notifyListeners();
-      debugPrint("Product added successfully");
       return true;
     } catch (error) {
       debugPrint("Error adding product: $error");
@@ -82,7 +75,7 @@ class ProductsProvider with ChangeNotifier {
 
   Future<bool> updateProduct(Product product) async {
     try {
-      String url = await _urlDb;
+      String url = await _databaseService.getDatabaseUrl();
       final response = await http.patch(
         Uri.parse("$url/products/${product.id}.json"),
         body: json.encode({
@@ -92,15 +85,15 @@ class ProductsProvider with ChangeNotifier {
           'imageUrl': product.imageUrl,
         }),
       );
-      debugPrint("Response status code: ${response.statusCode}");
       if (response.statusCode == 200 || response.statusCode == 204) {
-        notifyListeners();
-        debugPrint("Product updated successfully");
+        final prodIndex = _items.indexWhere((p) => p.id == product.id);
+        if (prodIndex >= 0) {
+          _items[prodIndex] = product;
+          notifyListeners();
+        }
         return true;
-      } else {
-        debugPrint("Failed to update product");
-        return false;
       }
+      return false;
     } catch (error) {
       debugPrint("Error updating product: $error");
       return false;
@@ -109,21 +102,16 @@ class ProductsProvider with ChangeNotifier {
 
   Future<bool> removeProduct(Product product) async {
     try {
-      String url = await _urlDb;
-      debugPrint("Removing product with id: ${product.id}");
+      String url = await _databaseService.getDatabaseUrl();
       final response = await http.delete(
         Uri.parse("$url/products/${product.id}.json"),
       );
-      debugPrint("Response status code: ${response.statusCode}");
       if (response.statusCode == 200 || response.statusCode == 204) {
-        _items.remove(product);
+        _items.removeWhere((p) => p.id == product.id);
         notifyListeners();
-        debugPrint("Product removed successfully");
         return true;
-      } else {
-        debugPrint("Failed to remove product");
-        return false;
       }
+      return false;
     } catch (error) {
       debugPrint("Error removing product: $error");
       return false;
